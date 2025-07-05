@@ -1,159 +1,167 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   AppBar,
-  Box,
-  CssBaseline,
-  Drawer,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Toolbar,
   Typography,
+  Button,
+  Box,
+  Container,
+  IconButton,
+  Menu,
+  MenuItem,
+  Avatar,
 } from '@mui/material';
 import {
-  Menu as MenuIcon,
-  Dashboard as DashboardIcon,
   Inventory as InventoryIcon,
-  Category as CategoryIcon,
-  LocalShipping as SupplierIcon,
-  SwapHoriz as StockMovementIcon,
-  ShoppingCart as SalesIcon,
+  Person as PersonIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 
-const drawerWidth = 240;
-
-const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Products', icon: <InventoryIcon />, path: '/products' },
-  { text: 'Categories', icon: <CategoryIcon />, path: '/categories' },
-  { text: 'Suppliers', icon: <SupplierIcon />, path: '/suppliers' },
-  { text: 'Stock Movements', icon: <StockMovementIcon />, path: '/stock-movements' },
-  { text: 'Sales', icon: <SalesIcon />, path: '/sales' },
-];
-
-function Layout() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+function Layout({ children }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleNavigation = (path) => {
-    navigate(path);
-    setMobileOpen(false);
+  const handleClose = () => {
+    setAnchorEl(null);
   };
 
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
+    handleClose();
   };
 
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Inventory System
-        </Typography>
-      </Toolbar>
-      <List>
-        {menuItems.map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => handleNavigation(item.path)}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItem>
-        ))}
-        <ListItem button onClick={handleLogout}>
-          <ListItemIcon>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText primary="Logout" />
-        </ListItem>
-      </List>
-    </div>
-  );
+  const handleProfile = () => {
+    // Navigate to profile page or show profile dialog
+    handleClose();
+  };
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return children; // Show login page without layout
+  }
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-        }}
-      >
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <AppBar position="static">
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Grocery Inventory Management
+          <InventoryIcon sx={{ mr: 2 }} />
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Inventory Management
           </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/products"
+            >
+              Products
+            </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/categories"
+            >
+              Categories
+            </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/suppliers"
+            >
+              Suppliers
+            </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/sales"
+            >
+              Sales
+            </Button>
+            
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleMenu}
+              color="inherit"
+            >
+              <Avatar sx={{ width: 32, height: 32 }}>
+                <PersonIcon />
+              </Avatar>
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+            >
+              <MenuItem onClick={handleProfile}>
+                <PersonIcon sx={{ mr: 1 }} />
+                Profile
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <LogoutIcon sx={{ mr: 1 }} />
+                Logout
+              </MenuItem>
+            </Menu>
+          </Box>
         </Toolbar>
       </AppBar>
+      
+      <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
+        {children}
+      </Container>
+      
       <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
+        component="footer"
         sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          py: 3,
+          px: 2,
+          mt: 'auto',
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'light'
+              ? theme.palette.grey[200]
+              : theme.palette.grey[800],
         }}
       >
-        <Toolbar />
-        <Outlet />
+        <Container maxWidth="sm">
+          <Typography variant="body2" color="text.secondary" align="center">
+            © 2024 Grocery Inventory Management System. All rights reserved.
+          </Typography>
+        </Container>
       </Box>
     </Box>
   );
